@@ -21,16 +21,73 @@ func firstElement(hash string) (int, bool) {
 	return 0, false
 }
 
-func MerkleTree(FirstName string, SurName string) (int, int) {
+// MerkleLeaves holds 8 leaf nodes for the Merkle tree
+type MerkleLeaves struct {
+	Leaves  [16]string
+	Parent1 [8]string
+	Parent2 [4]string
+	Parent3 [2]string
+	Root    string
+}
+
+func MerkleTree(FirstName string, SurName string) *MerkleLeaves {
+	// Generate hash from input name
 	HashInput := fmt.Sprintf("%s%s-MerkleTree", FirstName, SurName)
-	Hash := Hash(HashInput)
-	Number, err := firstElement(Hash)
+	hashValue := Hash(HashInput)
+
+	Number, err := firstElement(hashValue)
 	if !err {
 		fmt.Println("No numbers found in hash for: ", HashInput)
-		fmt.Println("Hash: ", Hash)
+		fmt.Println("Hash: ", hashValue)
 		os.Exit(1)
 	}
-	fmt.Println("Hash: ", Hash)
-	return Number, Number + 1
+	fmt.Println("Hash: ", hashValue)
 
+	// Generate the hash for "AliceDoe-MerkleTree"
+	aliceHash := Hash("AliceDoe-MerkleTree")
+
+	leaves := &MerkleLeaves{}
+
+	for i := 0; i < 16; i++ {
+		leaves.Leaves[i] = aliceHash
+	}
+
+	for index, _ := range leaves.Leaves {
+		if index == Number {
+			leaves.Leaves[index] = Hash(FirstName)
+		}
+		if index == Number+1 {
+			leaves.Leaves[index] = Hash(SurName)
+		}
+	}
+	index_count := 0
+	for index, _ := range leaves.Leaves {
+		if index%2 == 0 {
+			hash_string := fmt.Sprintf("%s%s", leaves.Leaves[index], leaves.Leaves[index+1])
+			leaves.Parent1[index_count] = Hash(hash_string)
+			fmt.Println("Parent 1: ", leaves.Parent1[index_count])
+			index_count++
+		}
+	}
+	index_count = 0
+	for index, _ := range leaves.Parent1 {
+		if index%2 == 0 {
+			hash_string := fmt.Sprintf("%s%s", leaves.Parent1[index], leaves.Parent1[index+1])
+			leaves.Parent2[index_count] = Hash(hash_string)
+			fmt.Println("Parent 2: ", leaves.Parent2[index_count])
+			index_count++
+		}
+	}
+
+	index_count = 0
+	for index, _ := range leaves.Parent2 {
+		if index%2 == 0 {
+			hash_string := fmt.Sprintf("%s%s", leaves.Parent2[index], leaves.Parent2[index+1])
+			leaves.Parent3[index_count] = Hash(hash_string)
+			fmt.Println("Parent3: ", leaves.Parent3[index_count])
+			index_count++
+		}
+	}
+
+	return leaves
 }
